@@ -14,13 +14,14 @@ module SpeedyWeather
     import NetCDF: NetCDF, NcFile, NcDim, NcVar
     import BitInformation: round, round!
 
-    export run_speedy, 
+    export run_speedy,initialize_model, 
         Parameters, GenLogisticCoefs,
         GeoSpectral, Boundaries, Constants, Geometry,
         PrognosticVariables, DiagnosticVariables,
         fourier, fourier_inverse,
         legendre, legendre_inverse,
-        spectral, gridded
+        spectral, gridded,initial_conditions,
+        get_tendencies!
 
     include("parameter_structs.jl")
     include("parameters.jl")
