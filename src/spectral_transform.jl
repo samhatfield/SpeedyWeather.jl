@@ -224,10 +224,14 @@ function vds!(  ucosm::Array{NF,2},
     end
 end
 
-function uvspec!(   vorm::Array{NF,2},
-                    divm::Array{NF,2},
-                    ucosm::Array{NF,2},
-                    vcosm::Array{NF,2},
+
+"""
+Calculate u and v in grid point space from vorticity and divergence in spectral space
+"""
+function uvspec!(   vorticity_k::Array{Complex{NF},2},  # vorticity at kth level
+                    divergence_k::Array{Complex{NF},2}, #divergence at kth level
+                    u_grid_k::Array{NF,2}, #sonal velocity at kth level, grid point space
+                    v_grid_k::Array{NF,2}, #meridonal velocity at kth level, grid point space
                     G::GeoSpectral{NF}) where {NF<:AbstractFloat}
 
     #TODO boundscheck
@@ -236,22 +240,33 @@ function uvspec!(   vorm::Array{NF,2},
     @unpack uvdx, uvdyp, uvdym = G.spectral
 
     #TODO preallocate elsewhere
-    zp = uvdx.*vorm*im
-    zc = uvdx.*divm*im
+    zp = uvdx.*vorticity_k*im
+    zc = uvdx.*divergence_k*im
+
+    ucosm = zeros(Complex{NF}, mx, nx)
+    vcosm = zeros(Complex{NF}, mx, nx)
+    #COMMENT: TK. Do we need at Rearth correction factor here? See spe_spectral.f90
 
     for m in 1:mx
-        ucosm[m,1]  =  zc[m,1] - uvdyp[m,1]*vorm[m,2]
-        ucosm[m,nx] =  uvdym[m,nx]*vorm[m,trunc+1]
-        vcosm[m,1]  =  zp[m,1] + uvdyp[m,1]*divm[m,2]
-        vcosm[m,nx] = -uvdym[m,nx]*divm[m,trunc+1]
+        ucosm[m,1]  =  zc[m,1] - uvdyp[m,1]*vorticity_k[m,2] 
+        ucosm[m,nx] =  uvdym[m,nx]*vorticity_k[m,trunc+1]
+        vcosm[m,1]  =  zp[m,1] + uvdyp[m,1]*divergence_k[m,2]
+        vcosm[m,nx] = -uvdym[m,nx]*divergence_k[m,trunc+1]
     end
 
     for n in 2:trunc+1
         for m in 1:mx
-          vcosm[m,n] = -uvdym[m,n]*divm[m,n-1] + uvdyp[m,n]*divm[m,n+1] + zp[m,n]
-          ucosm[m,n] =  uvdym[m,n]*vorm[m,n-1] - uvdyp[m,n]*vorm[m,n+1] + zc[m,n]
+          vcosm[m,n] = -uvdym[m,n]*divergence_k[m,n-1] + uvdyp[m,n]*divergence_k[m,n+1] + zp[m,n]
+          ucosm[m,n] =  uvdym[m,n]*vorticity_k[m,n-1] - uvdyp[m,n]*vorticity_k[m,n+1] + zc[m,n]
         end
+   
+       
     end
+
+    u_grid_k = gridded(ucosm, G)
+    v_grid_k = gridded(vcosm, G)
+
+
 end
 
 function vdspec!(   ug::Array{NF,2},
