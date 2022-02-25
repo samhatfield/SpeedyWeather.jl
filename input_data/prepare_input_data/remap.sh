@@ -32,22 +32,20 @@ fi
 # Set the number of latitudes and longitudes
 case $res in
     T31)
-        nlon=96; nlat=48;;
+        nlat=48;;
     T42)
-        nlon=128; nlat=64;;
+        nlat=64;;
     T85)
-        nlon=256; nlat=128;;
+        nlat=128;;
     T170)
-        nlon=512; nlat=256;;
+        nlat=256;;
     T341)
-        nlon=1024; nlat=512;;
+        nlat=512;;
     T682)
-        nlon=2048; nlat=1024;;
+        nlat=1024;;
 esac
 
-echo "Remapping TCO1279 orography to ${res} (${nlon} x ${nlat})"
+echo "Remapping TCO1279 orography to ${res} ($((nlat*2)) × ${nlat})"
 echo "NOTE: Negative values resulting from the remapping are set to zero"
-# For some reason the remapbil operator flips the latitudes, so we invert them
-# back here
-cdo abs -invertlat -remapbil,r${nlon}x${nlat} orog_TCO1279.nc orog_${res}.nc
+cdo abs -remapbil,n$((nlat/2)) orog_TCO1279.nc orog_${res}.nc
 
